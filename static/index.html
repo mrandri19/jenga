@@ -14,7 +14,7 @@
 </head>
 
 <body>
-    <a href="https://your-url" class="github-corner" aria-label="View source on Github">
+    <a href="https://github.com/mrandri19/jenga" class="github-corner" aria-label="View source on Github">
         <svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;"
             aria-hidden="true">
             <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
@@ -110,9 +110,16 @@
             </div>
         </div>
         <div class="row justify-content-md-center">
-            <p>This app calculates how many packages on
-                <a href="http://npmjs.com">npmjs.com</a> will fail to build or become vulnerable if the package you choose
-                gets removed or compromised.</p>
+            <div class="col">
+                <p>This app calculates how many packages on
+                    <a href="http://npmjs.com">npmjs.com</a> will fail to build or become vulnerable if the package you
+                    choose gets removed or compromised.</p>
+                <p>Check out how I made it on my
+                    <a href="https://mrandri19.github.io/jekyll/update/2018/06/24/how-much-of-npm-will-you-break.html">blog</a>.
+                </p>
+            </div>
+        </div>
+        <div class="row justify-content-md-center">
             <div class="col col-lg-6 col-xl-6 col-md-9">
                 <form action="" id="form">
                     <div class="form-group">
@@ -140,6 +147,7 @@
             <div class="col col-lg-6 col-xl-6 col-md-9" id="error">
             </div>
         </div>
+
     </div>
 
     <script>
@@ -170,7 +178,11 @@
             } else {
                 result[2].map(function (p) {
                     var child = document.createElement('li')
-                    child.textContent = p
+                    var a = document.createElement('a')
+                    a.href = "https://npmjs.com/package/" + p
+                    a.textContent = p
+
+                    child.appendChild(a)
                     document.getElementById('list').appendChild(child)
                 })
             }
