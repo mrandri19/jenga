@@ -6,9 +6,13 @@ use rocket::State;
 extern crate rocket_contrib;
 use rocket_contrib::Json;
 
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
 extern crate serde_json;
+
 use rocket::response::NamedFile;
-use serde_json::Value;
+use serde::de::IgnoredAny;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fs::File;
@@ -19,6 +23,15 @@ use std::sync::RwLock;
 type DependeciesMap = HashMap<String, Vec<String>>;
 type MostUsedMap = HashSet<String>;
 type SearchResult = (usize, f32, HashSet<String>);
+
+#[derive(Deserialize)]
+struct DependenciesJson {
+    id: String,
+    key: Key,
+}
+
+#[derive(Deserialize)]
+struct Key(String, IgnoredAny, IgnoredAny);
 
 fn create_dependencies_map(dependencies_path: &Path) -> Result<DependeciesMap> {
     // Remeber, I've removed first and last line and then added a comma at the
@@ -32,13 +45,12 @@ fn create_dependencies_map(dependencies_path: &Path) -> Result<DependeciesMap> {
 
         line.pop(); // Remove trailing comma
 
-        let v: Value = serde_json::from_str(&line)?;
+        let v: DependenciesJson = serde_json::from_str(&line)?;
 
-        let id = (&v["key"][0]).as_str().unwrap().to_owned();
-        let dependent = (&v["id"]).as_str().unwrap().to_owned();
+        let id = v.key.0;
+        let dependent = v.id;
 
-        let deps = dependents.entry(id).or_insert(vec![]);
-        (*deps).push(dependent.to_string());
+        dependents.entry(id).or_insert(vec![]).push(dependent);
     }
 
     Ok(dependents)
