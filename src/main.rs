@@ -38,6 +38,7 @@ struct Key(String, IgnoredAny, IgnoredAny);
 fn create_dependencies_map(dependencies_path: &Path) -> Result<DependeciesMap> {
     // Remeber, I've removed first and last line and then added a comma at the
     // end of the second-last
+    // Source file: https://skimdb.npmjs.com/registry/_design/app/_view/dependedUpon?reduce=false
     let file = File::open(dependencies_path)?;
 
     // Read all file lines into memory
