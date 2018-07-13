@@ -18,7 +18,7 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Result};
 use std::ops::DerefMut;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::RwLock;
 type DependeciesMap = HashMap<String, Vec<String>>;
 type MostUsedMap = HashSet<String>;
@@ -127,13 +127,14 @@ fn index() -> Result<NamedFile> {
     NamedFile::open(Path::new("static/index.html"))
 }
 
-#[get("/api/<package>")]
+#[get("/api/<package..>")]
 fn package(
     dependencies_map: State<DependeciesMap>,
     most_used_packages: State<MostUsedMap>,
     searches_cache: State<RwLock<HashMap<String, SearchResult>>>,
-    package: String,
+    package: PathBuf,
 ) -> Json<SearchResult> {
+    let package = package.into_os_string().into_string().unwrap();
     let mut cache = searches_cache.write().unwrap();
 
     let result = cache.deref_mut().entry(package.clone()).or_insert_with(|| {
