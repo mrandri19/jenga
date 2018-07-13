@@ -1,6 +1,8 @@
 #![feature(plugin)]
 #![plugin(rocket_codegen)]
 
+extern crate rayon;
+use rayon::prelude::*;
 extern crate rocket;
 use rocket::State;
 extern crate rocket_contrib;
@@ -38,20 +40,39 @@ fn create_dependencies_map(dependencies_path: &Path) -> Result<DependeciesMap> {
     // end of the second-last
     let file = File::open(dependencies_path)?;
 
-    let mut dependents: DependeciesMap = HashMap::new();
+    // Read all file lines into memory
+    let lines: Vec<String> = BufReader::new(file)
+        .lines()
+        .map(|line| line.unwrap())
+        .collect();
 
-    for line_opt in BufReader::new(file).lines() {
-        let mut line = line_opt?;
+    // Build the dependencies map concurrently, propegate errors through the process
+    let init = || Ok(DependeciesMap::new());
+    let dependents: DependeciesMap = lines
+        .into_par_iter()
+        .fold(init, |map: Result<DependeciesMap>, mut line| match map {
+            Ok(mut map) => {
+                line.pop(); // Remove trailing comma
 
-        line.pop(); // Remove trailing comma
+                let v: DependenciesJson = serde_json::from_str(&line)?;
 
-        let v: DependenciesJson = serde_json::from_str(&line)?;
+                let id = v.key.0;
+                let dependent = v.id;
 
-        let id = v.key.0;
-        let dependent = v.id;
-
-        dependents.entry(id).or_insert(vec![]).push(dependent);
-    }
+                map.entry(id).or_insert(vec![]).push(dependent);
+                Ok(map)
+            },
+            err => err,
+        })
+        .reduce(init, |map, other| match (map, other) {
+            (Ok(mut map), Ok(other)) => {
+                other.into_iter().for_each(|(id, dependent)|
+                    map.entry(id).or_insert(vec![]).extend(dependent)
+                );
+                Ok(map)
+            },
+            (err @ Err(_), _) | (_, err @ Err(_)) => err,
+        })?;
 
     Ok(dependents)
 }
